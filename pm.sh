@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
-PKG_DIR="${1:-vendor}"
-PKG_FILE="${2:-package.sh}"
+PKG_DIR="$PWD/${1:-vendor}"
+PKG_FILE="$PWD/${2:-package.sh}"
 
-. ./"$PKG_FILE"
+. "$PKG_FILE"
 
 get_val() {
-    echo $(eval "echo \"\${$1[$2]}\"")
+    eval "echo \"\${$1[$2]}\""
 }
 
 mkdir -p $PKG_DIR
@@ -23,26 +23,28 @@ for package in $PACKAGES; do
     if [ ! -d "$package" ]; then
         git clone --recurse-submodules $url $package
     fi
+
     cd $package
     git checkout $commit
 
-    dir=$(pwd)
     eval $build
 
-    cd $dir
+    cd "$PKG_DIR/$package"
     ARCHIVE=""
     for file in $libfile; do
         A=$(fd "$file" . -I -a | tr '\n' ' ')
+        echo "Found $(realpath --relative-to=$PKG_DIR $A)"
         ARCHIVE="$ARCHIVE $A"
     done
 
     INCLUDES=""
     for i in $includes; do
         I=$(pwd)/$i
+        echo "Adding $(realpath --relative-to=$PKG_DIR $I) to includes"
         INCLUDES="$INCLUDES $I"
     done
-    cd ..
 
+    cd $PKG_DIR
     cat <<EOF >$package.mk
 ARCHIVE += $ARCHIVE
 INCLUDES += $INCLUDES
