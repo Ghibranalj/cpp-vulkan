@@ -1,3 +1,7 @@
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <vector>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -8,30 +12,63 @@
 
 #include <fmt/core.h>
 
+unsigned int width = 800;
+unsigned int height = 600;
+std::string title = "Vulkan";
+
 int main() {
     glfwInit();
+    atexit(glfwTerminate);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    auto window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL); 
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
+    VkInstance instance;
 
-    uint32_t extensionCount = 0;
+    VkApplicationInfo appInfo = {};
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = title.c_str();
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "Bla Bla Engine";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_2;
+
+    VkInstanceCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo = &appInfo;
+    
+    unsigned int glfwExtensionCount = 0;
+    // array of strings
+    const char** glfwExtensions;
+    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    createInfo.enabledExtensionCount = glfwExtensionCount;
+    createInfo.ppEnabledExtensionNames = glfwExtensions;
+    createInfo.enabledLayerCount = 0;
+
+    VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+    if (result != VK_SUCCESS) {
+        fmt::print(stderr,"Failed to create instance!\n");
+        return EXIT_FAILURE;
+    }
+    fmt::println("Vulkan instance created successfully!");
+
+    unsigned int extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
-    fmt::print("{} extensions supported\n", extensionCount);
+    std::vector<VkExtensionProperties> extensions(extensionCount);
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix * vec;
+    fmt::print("Available extensions:\n");
+    for (const auto& extension : extensions) {
+        fmt::print("\t{}\n", extension.extensionName);
+    }
 
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
 
+    vkDestroyInstance(instance, nullptr);
     glfwDestroyWindow(window);
-
-    glfwTerminate();
-
-    return 0;
 }
