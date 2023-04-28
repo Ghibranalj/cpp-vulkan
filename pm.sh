@@ -21,7 +21,7 @@ for package in $PACKAGES; do
     includes=$(get_val $package 4)
 
     if [ ! -d "$package" ]; then
-        git clone $url $package
+        git clone --recurse-submodules $url $package
     fi
     cd $package
     git checkout $commit

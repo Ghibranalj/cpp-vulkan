@@ -15,4 +15,4 @@ CC=gcc -std=c17
 CPP=g++ -std=c++17
 CFLAGS= -Wall -Wextra -pedantic -O0 -g
 LDFLAG=
-LIBS= # your libs here
+LIBS= X11 vulkan # your libs here
